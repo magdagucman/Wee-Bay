@@ -1,0 +1,91 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>{{item.title}}</h2>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-auto">
+                <img src="{{item.image}}" style="max-width: 500px;"><br>
+            </div>
+            <div class="col-md-auto border-right">
+                <p>
+                Title: <a href="{% url 'listed' item.id %}">{{item.title}}</a><br>
+                Sold by: {{item.seller}}<br>
+                Started on: {{item.created}}<br>
+                Category: {{item.category}}<br>
+                {% if item.current_bid == 0 %}
+                Current price: {{item.price}}<br>
+                {% else %}
+                Current bid: {{item.current_bid}}<br>
+                {% endif %}
+                {% if user.is_authenticated %}
+                    {% if watched %}
+                        <form action="{% url 'remove' item.id %}" method="post" class="block">
+                            {% csrf_token %}
+                            <button class="btn btn-warning btn-block">Remove from watchlist</button>
+                        </form>  
+                    {% else %}  
+                        <form action="{% url 'add' item.id %}" method="post" class="block">
+                            {% csrf_token %}
+                            <button class="btn btn-warning btn-block">Add to watchlist</button>
+                        </form>
+                    {% endif %}
+                    {% if not user.id == item.seller.id %}
+                        {% if not item.closed %}
+                        <form action="{% url 'listed' item.id %}" method="post" class="block">
+                            {{ form }}
+                            {% csrf_token %}
+                            <button class="btn btn-warning inline">Bid</button>
+                        </form>
+                        {% else %}
+                            <h3>This auction is closed.</h3>
+                            {% if user == winner %}
+                            <h3>You have won!</h3>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                    {% if message %}
+                    {{ message }}
+                    {% endif %}
+                    {% if user.id == item.seller.id and not item.closed %}
+                        <div class="form-group">
+                            <form action="{% url 'close' item.id %}" method="post" class="block">
+                                {% csrf_token %}
+                                <button class="btn btn-warning btn-block">Close Auction</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <form action="{% url 'comment' item.id %}" method="post" class="block">
+                            {{ comment_form }}
+                            {% csrf_token %}
+                            <button class="btn btn-warning inline">Comment</button>
+                        </form>
+                    </div>
+                    {{ comment_message }}
+                {% endif %}
+                </p>
+            </div>
+            <div class="col">
+                <p>
+                Description: {{item.description}}
+                </p>
+            </div>
+        </div>
+        <hr>
+    </div>
+
+        <h3>Comments</h3>
+            {% for comment in comments %}
+            <div class="card">
+                <h5 class="card-header">{{ comment.commenter }}
+                  <time style="float:right;">{{comment.created}}</time></h5>
+                  <div class="card-body">
+                  <p class="card-text">{{comment.comment}}</p>
+                  </div>
+              </div>
+            {% empty %}
+                <h4>No comments yet!</h4>
+            {% endfor %}
+        </ul>
+{% endblock %}

@@ -1,0 +1,73 @@
+class ItemForm(forms.Form):
+    CHOICES = []
+    for cat in Category.objects.all():
+        CHOICES.append((str(cat),cat))
+    title = forms.CharField(label="", widget=forms.TextInput(attrs={'class' : 'item', 'name': "title", 'placeholder': "Title"}))
+    price = forms.DecimalField(label="", widget=forms.TextInput(attrs={'class' : 'item', 'name': "price", 'placeholder': "Minimum Price"}))
+    description = forms.CharField(label="", widget=forms.Textarea(attrs={'name': "description", 'placeholder': "Describe Your Item"}))
+    category = forms.ChoiceField(choices=CHOICES, required=False, label="", widget=forms.Select(attrs={'class' : 'item', 'name': "category", 'placeholder': "Category (optional)"}))
+    image = forms.URLField(max_length=100, label="", required=False, widget=forms.TextInput(attrs={'class' : 'item', 'name': "image", 'placeholder': "Image URL (optional)"}))
+
+class BidForm(forms.Form):
+    bid = forms.DecimalField(label="")
+
+class CommentForm(forms.Form):
+    comment = forms.CharField(label="", widget=forms.Textarea(attrs={'name': "comment", 'placeholder': "Leave a Comment"}))
+
+
+
+ form = ItemForm(request.POST)
+        if form.is_valid():
+            title = form.cleaned_data["title"]
+            price = form.cleaned_data["price"]
+            description = form.cleaned_data["description"]
+            image = form.cleaned_data["image"]
+            i = Item(title=title, price=price, description=description, image=image)
+            i.save()
+            return HttpResponseRedirect(reverse("index"))
+
+
+
+class Item(models.Model):
+    id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=64)
+    description = models.TextField(max_length=500)
+    image = models.URLField(default="None")
+    price = models.DecimalField(decimal_places=2, max_digits=32)
+    seller = models.ForeignKey(User, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now=True)
+
+class Category(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=32)
+    items = models.ManyToManyField(Item, blank=True, related_name="items")
+    def __str__(self):
+        return f"{self.name}"
+
+
+class Bid(models.Model):
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    bid = models.DecimalField(decimal_places=2, max_digits=32)
+
+class Comment(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    commenter = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.TextField(max_length=150)
+    def __str__(self):
+        return f"{self.comment}"
+
+class Watchlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+
+
+from .models import User, Category, Item, Bid, Comment, Watchlist
+
+# Register your models here.
+admin.site.register(User)
+admin.site.register(Category)
+admin.site.register(Item)
+admin.site.register(Bid)
+admin.site.register(Comment)
+admin.site.register(Watchlist)
